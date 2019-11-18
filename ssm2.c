@@ -169,13 +169,10 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 
 	c = 0;
 	/* Wait till either response or timeout (0.15s) */
-	while (c < 3 && !QUERY_PROCESSED)
-	{
-		c++;
-		usleep(50000);
-	}
+	while (c++ < 3 && !QUERY_PROCESSED)
+		usleep(50000);	
 
-	/* Command timedout. No response */
+	/* Command timedout: No response */
 	if (!QUERY_PROCESSED)
 		return -2;
 
@@ -217,7 +214,7 @@ unsigned char get_checksum(ssm2_query *q)
 	unsigned char ck = 0;
 	size_t i = 0;
 
-	for (i = 0; i < q->q_size; ck += q->q_raw[i], i++);
+	for (i = 0; i < q->q_size; ck += q->q_raw[i++]);
 
 	return ck;
 }
@@ -232,22 +229,31 @@ unsigned char get_checksum(ssm2_query *q)
 void sig_io_handler(int status)
 {
 	unsigned char buf[MAX_RESPONSE] = {0};
+	int c = 0;
 
 #ifdef DBG
 	puts("[+] Sig IO handler");
 #endif
-	//usleep(20000);
+	
 	/* Read echo/loopback msg: discard q->q_size bytes */
 	do
 	{
+		usleep(10000);
 		r->r_discarded += read(fd, buf, q->q_size - r->r_discarded);
-	} while (q->q_size != r->r_discarded);
+	} while (q->q_size != r->r_discarded && c++ < 2);
+	
 	usleep(30000);
+	
+	/* Read ECU response: init src dst size 0xe8 byte1 byte2 byten crc -> 6+addr*count */
+	c = 0;
+	do
+	{
+		usleep(10000);
+		r->r_size += read(fd, buf + r->r_size, MAX_RESPONSE - r->r_size - 1);
+	while(r->r_size != 6 + ((q->q_raw[3] - 2) / 3) && c++ < 2);
 
-	r->r_size = read(fd, buf, MAX_RESPONSE-1);
-
-	/* sanity check + check if destination is us */
-	if (r->r_size < 5 || r->r_raw[1] != DST_DIAG)
+	/* check if we're actually the recipient && data size */
+	if (r->r_raw[1] != DST_DIAG || r->r_size != 6 + ((q->q_raw[3] - 2) / 3))
 		return;
 
 #ifdef DBG
