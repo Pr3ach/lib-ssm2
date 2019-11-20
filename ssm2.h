@@ -33,6 +33,8 @@
 #define DST_ECU SRC_ECU
 #define SSM2_QUERY_CMD 0xa8
 
+#define SSM2_QUERY_TIMEOUT 100000 /* in usec */
+
 /* SSM2 query */
 typedef struct ssm2_query
 {
@@ -53,7 +55,6 @@ int fd;
 struct termios tios, old_tios;
 ssm2_query *q;	/* Global var for query */
 ssm2_response *r;	/* Global var for response */
-int QUERY_PROCESSED;
 
 int ssm2_open(char *device);
 int ssm2_close(void);
@@ -63,5 +64,6 @@ void init_query(ssm2_query *q);
 void sig_io_handler(int status);
 unsigned char get_checksum(ssm2_query *q);
 void print_raw_query(ssm2_query *q);
+int get_query_response(unsigned char *out, int count);
 
 #endif

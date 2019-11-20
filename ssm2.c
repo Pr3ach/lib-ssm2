@@ -32,6 +32,7 @@
 #include <termios.h>
 #include <errno.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include <string.h>
 #include "ssm2.h"
 
@@ -39,8 +40,8 @@ int main(void)
 {
 	unsigned int a[] = {0x8, 0x1c};
 	unsigned char buf[32] = {0};
-	q = calloc(1, sizeof(ssm2_query));
-	r = calloc(1, sizeof(ssm2_response));
+	//q = calloc(1, sizeof(ssm2_query));
+	//r = calloc(1, sizeof(ssm2_response));
 
 	if (ssm2_open("/dev/ttyUSB0") != 0)
 	{
@@ -67,7 +68,6 @@ int main(void)
  */
 int ssm2_open(char *device)
 {
-	/* non-blocking read */
 	if ((fd = open(device, O_RDWR | O_NOCTTY)) < 0)
 		return -1;
 
@@ -124,8 +124,6 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 	size_t i = 0;
 	int c = 0;
 
-	QUERY_PROCESSED = 0;
-
 	if (count < 1)
 		return -1;
 
@@ -153,21 +151,7 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 	if (write(fd, q->q_raw, q->q_size) != (ssize_t) q->q_size)
 		return -2;
 
-	c = 0;
-	/* Wait till either response or timeout (0.15s) */
-	while (c++ < 3 && !QUERY_PROCESSED)
-		usleep(50000);
-
-	/* Command timedout: No response */
-	if (!QUERY_PROCESSED)
-		return -2;
-
-	/* Copy response data only.
-	 * Copy size = total len - init - dst - src - size - pad - checksum = count = r->r_size - 6
-	 */
-	memcpy(out, &r->r_raw[5], r->r_size - 6);
-
-	return 0;
+	return get_query_response(out, count);
 }
 
 /*
@@ -177,6 +161,7 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 void init_query(ssm2_query *q)
 {
 	memset(q, 0, sizeof(ssm2_query));
+
 	q->q_raw[0] = SSM2_INIT;
 	q->q_raw[1] = DST_ECU;
 	q->q_raw[2] = SRC_DIAG;
@@ -207,53 +192,32 @@ unsigned char get_checksum(ssm2_query *q)
 	return ck;
 }
 
-
 /*
- * SIGIO signal handler: Handle IO on fd.
- * Fill in a ssm2_response with raw response from the device.
- * Set QUERY_PROCESSED to 1 if everything is fine.
+ * Read and update response buffer and out.
+ * Return 0 on success, < 0 otherwise.
  *
  */
-void sig_io_handler(int status)
+int get_query_response(unsigned char *out, int count)
 {
-	unsigned char buf[MAX_RESPONSE] = {0};
-	int c = 0;
+	struct timeval tv;
+	fd_set rfds;
 
-#ifdef DBG
-	puts("[+] Sig IO handler");
-#endif
+	/* init read fd set & assign serial fd to read fd set */
+	FD_ZERO(&rfds);
+	FD_SET(fd, &rfds);
 
-	/* Read echo/loopback msg: discard q->q_size bytes */
-	do
-	{
-		usleep(10000);
-		r->r_discarded += read(fd, buf, q->q_size - r->r_discarded);
-	} while (q->q_size != r->r_discarded && c++ < 2);
+	tv.tv_sec = 0;
+	tv.tv_usec = SSM2_QUERY_TIMEOUT;
 
-	usleep(30000);
+	if (select(fd+1, &rfds, NULL, NULL, &tv) == -1)
+		return -1;	/* Error */
 
-	/* Read ECU response: init src dst size 0xe8 byte1 byte2 byten crc -> 6+addr*count */
-	c = 0;
-	do
-	{
-		usleep(10000);
-		r->r_size += read(fd, buf + r->r_size, MAX_RESPONSE - r->r_size - 1);
-	while(r->r_size != 6 + ((q->q_raw[3] - 2) / 3) && c++ < 2);
+	if (!FD_ISSET(fd, &rfds))
+		return -2;	/* Query timedout */
 
-	/* check if we're actually the recipient && data size */
-	if (r->r_raw[1] != DST_DIAG || r->r_size != 6 + ((q->q_raw[3] - 2) / 3))
-		return;
-
-#ifdef DBG
-	printf("[+] Got %ld bytes:\n", r->r_size);
-#endif
-
-	/* Copy local buffer response's data to global variable */
-	memcpy(r->r_raw, buf, r->r_size);
-
-	/* Indicate query has been processed and response is available */
-	QUERY_PROCESSED = 1;
+	/* TODO: discard loopback, read response to buffer(s) */
 }
+
 
 /*
  * Unset signal handler, clean TTY, set old TTY options and close device.
