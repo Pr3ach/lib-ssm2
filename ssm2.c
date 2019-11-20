@@ -31,7 +31,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <errno.h>
-#include <signal.h>
+#include <sys/select.h>
 #include <string.h>
 #include "ssm2.h"
 
@@ -61,16 +61,14 @@ int main(void)
 
 /*
  *
- * Open specified serial device for read/write async.
+ * Open specified serial device for read/write.
  * Return < 0 if error, 0 otherwise.
  *
  */
 int ssm2_open(char *device)
 {
-	struct sigaction sa_io;
-
 	/* non-blocking read */
-	if ((fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK)) < 0)
+	if ((fd = open(device, O_RDWR | O_NOCTTY)) < 0)
 		return -1;
 
 	/* get current TTY settings */
@@ -80,12 +78,13 @@ int ssm2_open(char *device)
 		return -2;
 	}
 
-	/* save it so it can be restored later */
+	/* save options so they can be restored later */
 	old_tios = tios;
 
 	/* set 4800 baud in and out */
 	cfsetspeed(&tios, B4800);
-	cfmakeraw(&tios); /* set raw mode */
+	/* set raw mode */
+	cfmakeraw(&tios);
 
 	/*
 	 * 8N1: 1 stop bit, no flow ctl, 8 bits, no parity
@@ -94,8 +93,6 @@ int ssm2_open(char *device)
 	tios.c_cflag |= CLOCAL;
 	tios.c_cflag |= CS8;
 	tios.c_cflag &= ~PARENB;
-	tios.c_cc[VTIME] = 1;	/* 0.1s timeout */
-	tios.c_cc[VMIN] = 0;
 
 	tcflush(fd, TCIFLUSH);
 
@@ -108,17 +105,6 @@ int ssm2_open(char *device)
 
 	q = calloc(1, sizeof(ssm2_query));
 	r = calloc(1, sizeof(ssm2_response));
-
-	/* set IO handler */
-	sa_io.sa_handler = sig_io_handler;
-	sa_io.sa_flags = 0;
-	sa_io.sa_restorer = NULL;
-	sigemptyset(&sa_io.sa_mask);
-	sigaction(SIGIO, &sa_io, NULL);
-
-	// Allow process to receive SIGIO
-	fcntl(fd, F_SETOWN, getpid());
-	fcntl(fd, F_SETFL, FASYNC);
 
 	return 0;
 }
@@ -170,15 +156,16 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 	c = 0;
 	/* Wait till either response or timeout (0.15s) */
 	while (c++ < 3 && !QUERY_PROCESSED)
-		usleep(50000);	
+		usleep(50000);
 
 	/* Command timedout: No response */
 	if (!QUERY_PROCESSED)
 		return -2;
 
 	/* Copy response data only.
-	 * Copy size = total len - init - dst - src - size - pad - checksum = count = r->r_size - 6 */
-	memcpy(out, &r->r_raw[5], r->r_size-6);
+	 * Copy size = total len - init - dst - src - size - pad - checksum = count = r->r_size - 6
+	 */
+	memcpy(out, &r->r_raw[5], r->r_size - 6);
 
 	return 0;
 }
@@ -189,6 +176,7 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
  */
 void init_query(ssm2_query *q)
 {
+	memset(q, 0, sizeof(ssm2_query));
 	q->q_raw[0] = SSM2_INIT;
 	q->q_raw[1] = DST_ECU;
 	q->q_raw[2] = SRC_DIAG;
@@ -234,16 +222,16 @@ void sig_io_handler(int status)
 #ifdef DBG
 	puts("[+] Sig IO handler");
 #endif
-	
+
 	/* Read echo/loopback msg: discard q->q_size bytes */
 	do
 	{
 		usleep(10000);
 		r->r_discarded += read(fd, buf, q->q_size - r->r_discarded);
 	} while (q->q_size != r->r_discarded && c++ < 2);
-	
+
 	usleep(30000);
-	
+
 	/* Read ECU response: init src dst size 0xe8 byte1 byte2 byten crc -> 6+addr*count */
 	c = 0;
 	do
