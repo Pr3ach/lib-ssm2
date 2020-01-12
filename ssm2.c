@@ -39,16 +39,15 @@
 int main(void)
 {
 	unsigned int a[] = {0x8, 0x1c};
+	int noquery = 2;
 	unsigned char buf[32] = {0};
-	//q = calloc(1, sizeof(ssm2_query));
-	//r = calloc(1, sizeof(ssm2_response));
 
 	if (ssm2_open("/dev/ttyUSB0") != 0)
 	{
 		perror("[!] SSM2 open fail");
 		exit(-1);
 	}
-	if (ssm2_query_ecu(a, buf, 2) != 0)
+	if (ssm2_query_ecu(a, buf, noquery) != SSM2_ESUCCESS)
 	{
 		perror("[!] Error query");
 		exit(-1);
@@ -230,13 +229,15 @@ int get_query_response(unsigned char *out, int count)
 	if (!FD_ISSET(fd, &rfds))
 		return SSM2_ETIMEOUT;	/* Query timed out */
 
-	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < 7)
+	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
 		return SSM2_EPARTIAL;
+
+	/* TODO: discard loopback */
 
 	if (get_response_checksum(r) != r->r_raw[r->r_size-1])
 		return SSM2_EBADCS; /* checksum mismatch */
 
-	memcpy(out, r->r_raw+5, r->r_raw[3] - 1);
+	memcpy(out, r->r_raw+(q->q_size+5), r->r_raw[3] - 1);
 
 	return SSM2_ESUCCESS;
 }
