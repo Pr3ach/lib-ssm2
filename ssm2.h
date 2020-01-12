@@ -33,6 +33,15 @@
 #define DST_ECU SRC_ECU
 #define SSM2_QUERY_CMD 0xa8
 
+/* Errors */
+#define SSM2_ESUCCESS 0
+#define SSM2_ETIMEOUT -1
+#define SSM2_EUNKN -2
+#define SSM2_ENOQUERY -3
+#define SSM2_EWRITE -4
+#define SSM2_EPARTIAL -5
+#define SSM2_EBADCS -6
+
 #define SSM2_QUERY_TIMEOUT 100000 /* in usec */
 
 /* SSM2 query */
@@ -53,7 +62,7 @@ typedef struct ssm2_response
 
 int fd;
 struct termios tios, old_tios;
-ssm2_query *q;	/* Global var for query */
+ssm2_query *q;		/* Global var for query */
 ssm2_response *r;	/* Global var for response */
 
 int ssm2_open(char *device);

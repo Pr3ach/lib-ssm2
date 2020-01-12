@@ -18,10 +18,10 @@
 
 /* SSM2 header: */
 /*unsigned char init;		init byte (0x80) */
-/*unsigned char dst;		destination byte. ECU (0x10) or Diag. tool (0xf0) */
+/*unsigned char dst;		destination byte. ECU (0x10) or Diag tool (0xf0) */
 /*unsigned char src;		source byte. Same as above */
 /*unsigned char size;		data size in bytes */
-/*unsigned char data[MAX_DATA];	data */
+/*unsigned char data[MAX_DATA];	actual data */
 /*unsigned char checksum;	checksum */
 
 #include <stdio.h>
@@ -87,7 +87,7 @@ int ssm2_open(char *device)
 	cfmakeraw(&tios);
 
 	/*
-	 * 8N1: 1 stop bit, no flow ctl, 8 bits, no parity
+	 * 8N1: 1 stop bit, no flow ctl, 8 data bits, no parity
 	 */
 	tios.c_cflag &= ~CSTOPB;
 	tios.c_cflag |= CLOCAL;
@@ -125,7 +125,7 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 	int c = 0;
 
 	if (count < 1)
-		return -1;
+		return SSM2_ENOQUERY;
 
 	init_query(q);
 
@@ -149,7 +149,7 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 #endif
 
 	if (write(fd, q->q_raw, q->q_size) != (ssize_t) q->q_size)
-		return -2;
+		return SSM2_EWRITE;
 
 	return get_query_response(out, count);
 }
@@ -173,9 +173,24 @@ void init_query(ssm2_query *q)
 void print_raw_query(ssm2_query *q)
 {
 	size_t i = 0;
+
 	for (i = 0; i < q->q_size; i++)
 		printf("%02x ", q->q_raw[i]);
 	printf("\n");
+}
+
+/*
+ * Compute and return ssm2 response checksum.
+ *
+ */
+unsigned char get_response_checksum(ssm2_response *r)
+{
+	unsigned char ck = 0;
+	size_t i = 0;
+
+	for (i = 0; i < r->r_size-1; ck += r->r_raw[i++]);
+
+	return ck;
 }
 
 /*
@@ -210,14 +225,21 @@ int get_query_response(unsigned char *out, int count)
 	tv.tv_usec = SSM2_QUERY_TIMEOUT;
 
 	if (select(fd+1, &rfds, NULL, NULL, &tv) == -1)
-		return -1;	/* Error */
+		return SSM2_EUNKN;	/* Error */
 
 	if (!FD_ISSET(fd, &rfds))
-		return -2;	/* Query timedout */
+		return SSM2_ETIMEOUT;	/* Query timed out */
 
-	/* TODO: discard loopback, read response to buffer(s) */
+	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < 7)
+		return SSM2_EPARTIAL;
+
+	if (get_response_checksum(r) != r->r_raw[r->r_size-1])
+		return SSM2_EBADCS; /* checksum mismatch */
+
+	memcpy(out, r->r_raw+5, r->r_raw[3] - 1);
+
+	return SSM2_ESUCCESS;
 }
-
 
 /*
  * Unset signal handler, clean TTY, set old TTY options and close device.
