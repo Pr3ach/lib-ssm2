@@ -127,6 +127,7 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 		return SSM2_ENOQUERY;
 
 	init_query(q);
+	memset(r, 0, sizeof(ssm2_response));
 
 	/* size = command + pad + addresses = 1 + 1 + 3*count */
 	q->q_raw[3] = 3*count + 2;
