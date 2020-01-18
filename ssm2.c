@@ -232,11 +232,10 @@ int get_query_response(unsigned char *out, int count)
 	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
 		return SSM2_EPARTIAL;
 
-	/* TODO: discard loopback */
-
 	if (get_response_checksum(r) != r->r_raw[r->r_size-1])
 		return SSM2_EBADCS; /* checksum mismatch */
 
+	/* discard loopback */
 	memcpy(out, r->r_raw+(q->q_size+5), r->r_raw[3] - 1);
 
 	return SSM2_ESUCCESS;

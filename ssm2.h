@@ -42,7 +42,7 @@
 #define SSM2_EPARTIAL -5
 #define SSM2_EBADCS -6
 
-#define SSM2_QUERY_TIMEOUT 100000 /* in usec */
+#define SSM2_QUERY_TIMEOUT 100000 /* in usec; 10ms */
 
 /* SSM2 query */
 typedef struct ssm2_query
