@@ -38,7 +38,7 @@
 
 int main(void)
 {
-	unsigned int a[] = {0x8, 0x1c};
+	unsigned int a[] = {0x8f, 0xa5};
 	int noquery = 2;
 	unsigned char buf[32] = {0};
 	int ret = 0;
@@ -48,7 +48,7 @@ int main(void)
 		perror("[!] SSM2 open fail");
 		exit(-1);
 	}
-	if ((ret = ssm2_query_ecu(a, buf, noquery) != SSM2_ESUCCESS))
+	if ((ret = ssm2_query_ecu(a, buf, noquery)) != SSM2_ESUCCESS)
 	{
 		printf("[!] ret val: %d\n", ret);
 		exit(-1);
@@ -203,7 +203,7 @@ unsigned char get_response_checksum(ssm2_response *r)
 	unsigned char ck = 0;
 	size_t i = 0;
 
-	for (i = 0; i < r->r_size-1; ck += r->r_raw[i++]);
+	for (i = q->q_size; i < r->r_size-1; ck += r->r_raw[i++]);
 
 	return ck;
 }
