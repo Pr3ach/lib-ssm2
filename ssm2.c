@@ -31,7 +31,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <errno.h>
-#include <sys/select.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <string.h>
 #include "ssm2.h"
@@ -230,21 +230,13 @@ unsigned char get_checksum(ssm2_query *q)
  */
 int get_query_response(unsigned char *out, int count)
 {
-	struct timeval tv;
-	fd_set rfds;
+	unsigned int bytes_avail = 0;
 
-	/* init read fd set & assign serial fd to read fd set */
-	FD_ZERO(&rfds);
-	FD_SET(fd, &rfds);
 
-	tv.tv_sec = 0;
-	tv.tv_usec = SSM2_QUERY_TIMEOUT;
-
-	if (select(fd+1, &rfds, NULL, NULL, &tv) == -1)
-		return SSM2_EUNKN;	/* Error */
-
-	if (!FD_ISSET(fd, &rfds))
-		return SSM2_ETIMEOUT;	/* Query timed out */
+	do
+	{
+		ioctl(fd, FIONREAD, &bytes_avail);
+	} while(bytes_avail < q->q_size + 7); /* TODO: add a safeguard timeout */
 
 	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
 		return SSM2_EPARTIAL;
@@ -258,7 +250,6 @@ int get_query_response(unsigned char *out, int count)
 
 	/* discard loopback */
 	memcpy(out, r->r_raw+(q->q_size+5), r->r_raw[3] - 1);
-
 
 	return SSM2_ESUCCESS;
 }
