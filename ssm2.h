@@ -73,6 +73,7 @@ void init_query(ssm2_query *q);
 void sig_io_handler(int status);
 unsigned char get_checksum(ssm2_query *q);
 void print_raw_query(ssm2_query *q);
+void print_raw_response(ssm2_response *r);
 int get_query_response(unsigned char *out, int count);
 
 #endif

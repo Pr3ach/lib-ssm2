@@ -175,9 +175,22 @@ void print_raw_query(ssm2_query *q)
 {
 	size_t i = 0;
 
-	printf("raw query: ");
-	for (i = 0; i < q->q_size; i++)
+	printf("raw query   : ");
+	for (i = 0; i < 32; i++)
 		printf("%02x ", q->q_raw[i]);
+	printf("\n");
+}
+
+/*
+ * Print raw ssm2 response, for debug purposes
+ */
+void print_raw_response(ssm2_response *r)
+{
+	size_t i = 0;
+
+	printf("raw response: ");
+	for (i = 0; i < 32; i++)
+		printf("%02x ", r->r_raw[i]);
 	printf("\n");
 }
 
@@ -235,11 +248,16 @@ int get_query_response(unsigned char *out, int count)
 	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
 		return SSM2_EPARTIAL;
 
+#ifdef DBG
+	print_raw_response(r);
+#endif
+
 	if (get_response_checksum(r) != r->r_raw[r->r_size-1])
 		return SSM2_EBADCS; /* checksum mismatch */
 
 	/* discard loopback */
 	memcpy(out, r->r_raw+(q->q_size+5), r->r_raw[3] - 1);
+
 
 	return SSM2_ESUCCESS;
 }
