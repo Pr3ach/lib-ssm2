@@ -41,18 +41,19 @@ int main(void)
 	unsigned int a[] = {0x8, 0x1c};
 	int noquery = 2;
 	unsigned char buf[32] = {0};
+	int ret = 0;
 
 	if (ssm2_open("/dev/ttyUSB0") != 0)
 	{
 		perror("[!] SSM2 open fail");
 		exit(-1);
 	}
-	if (ssm2_query_ecu(a, buf, noquery) != SSM2_ESUCCESS)
+	if ((ret = ssm2_query_ecu(a, buf, noquery) != SSM2_ESUCCESS))
 	{
-		perror("[!] Error query");
+		printf("[!] ret val: %d\n", ret);
 		exit(-1);
 	}
-	for (int i = 0; i < 30; i++)
+	for (int i = 0; i < noquery; i++)
 		printf("%02x ", buf[i]);
 	ssm2_close();
 
@@ -174,6 +175,7 @@ void print_raw_query(ssm2_query *q)
 {
 	size_t i = 0;
 
+	printf("raw query: ");
 	for (i = 0; i < q->q_size; i++)
 		printf("%02x ", q->q_raw[i]);
 	printf("\n");
@@ -249,15 +251,7 @@ int get_query_response(unsigned char *out, int count)
  */
 int ssm2_close(void)
 {
-	struct sigaction sa_io;
 	int ret_mask = 0;
-
-	/* restore default IO handler */
-	sa_io.sa_handler = SIG_DFL;
-	sa_io.sa_flags = 0;
-	sa_io.sa_restorer =  NULL;
-	sigemptyset(&sa_io.sa_mask);
-	sigaction(SIGIO, &sa_io, NULL);
 
 	/* restore old TTY settings */
 	tcflush(fd, TCIFLUSH);
