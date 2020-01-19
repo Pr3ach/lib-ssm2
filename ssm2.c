@@ -55,6 +55,7 @@ int main(void)
 	}
 	for (int i = 0; i < noquery; i++)
 		printf("%02x ", buf[i]);
+	printf("\n");
 	ssm2_close();
 
 	return 0;
