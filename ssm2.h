@@ -41,8 +41,9 @@
 #define SSM2_EWRITE -4
 #define SSM2_EPARTIAL -5
 #define SSM2_EBADCS -6
+#define SSM2_EDST -7
 
-#define SSM2_QUERY_TIMEOUT 100000 /* in usec; 10ms */
+#define SSM2_QUERY_TIMEOUT 300000 /* in usec; 0.3s */
 
 /* SSM2 query */
 typedef struct ssm2_query

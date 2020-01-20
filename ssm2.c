@@ -32,7 +32,7 @@
 #include <termios.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
+#include <time.h>
 #include <string.h>
 #include "ssm2.h"
 
@@ -231,12 +231,12 @@ unsigned char get_checksum(ssm2_query *q)
 int get_query_response(unsigned char *out, int count)
 {
 	unsigned int bytes_avail = 0;
-
+	clock_t start = clock();
 
 	do
 	{
 		ioctl(fd, FIONREAD, &bytes_avail);
-	} while(bytes_avail < q->q_size + 7); /* TODO: add a safeguard timeout */
+	} while(bytes_avail < q->q_size + 7 && start - clock() < SSM2_QUERY_TIMEOUT);
 
 	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
 		return SSM2_EPARTIAL;
@@ -244,6 +244,9 @@ int get_query_response(unsigned char *out, int count)
 #ifdef DBG
 	print_raw_response(r);
 #endif
+
+	if (r->r_raw[q->q_size+1] != DST_DIAG)
+		return SSM2_EDST;
 
 	if (get_response_checksum(r) != r->r_raw[r->r_size-1])
 		return SSM2_EBADCS; /* checksum mismatch */
