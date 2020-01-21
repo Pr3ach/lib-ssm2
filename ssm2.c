@@ -92,10 +92,10 @@ int ssm2_open(char *device)
  * out: where to store the results
  * count: number of addresses to query
  *
- * Return 0 if no error occured, < 0 otherwise
+ * Return SSM2_ESUCESS on success
  *
  */
-int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
+int ssm2_query_ecu(unsigned int *addresses, size_t_count, unsigned char *out)
 {
 	size_t i = 0;
 	int c = 0;
@@ -124,6 +124,40 @@ int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count)
 #ifdef DBG
 	print_raw_query(q);
 #endif
+
+	if (write(fd, q->q_raw, q->q_size) != (ssize_t) q->q_size)
+		return SSM2_EWRITE;
+
+	return get_query_response(out, count);
+}
+
+/*
+ * Query ECU for count bytes from address from_addr
+ *
+ * from_addr: address from where to start reading
+ * count: number of bytes to read from from_addr address
+ * buf: store results here
+ *
+ * Return SSM2_ESUCESS on success
+ */
+int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned char *out)
+{
+	if (count <= 0 || from_addr == 0)
+		return SSM2_ENOQUERY;
+	count--;
+
+	init_query(q);
+	memset(r, 0, sizeof(ssm2_response));
+
+	q->q_raw[3] = 6;
+	q->q_raw[4] = SSM2_BLOCKQUERY_ECU;
+	q->q_raw[5] = (unsigned char) 0;	/* pad byte */
+	q->q_raw[6] = from_addr & 0x0000ff;
+	q->q_raw[7] = from_addr & 0x00ff00;
+	q->q_raw[8] = from_addr & 0xff0000;
+	q->q_raw[9] = count;
+	q->q_size = 11;
+	q->q_raw[10] = get_checksum(q);
 
 	if (write(fd, q->q_raw, q->q_size) != (ssize_t) q->q_size)
 		return SSM2_EWRITE;

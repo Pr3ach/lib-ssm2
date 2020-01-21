@@ -32,6 +32,7 @@
 #define DST_DIAG SRC_DIAG
 #define DST_ECU SRC_ECU
 #define SSM2_QUERY_CMD 0xa8
+#define SSM2_BLOCKQUERY_CMD 0xa0
 
 /* Errors */
 #define SSM2_ESUCCESS 0
@@ -71,7 +72,8 @@ ssm2_response *r;	/* Global var for response */
 
 int ssm2_open(char *device);
 int ssm2_close(void);
-int ssm2_query_ecu(unsigned int *addresses, unsigned char *out, size_t count);
+int ssm2_query_ecu(unsigned int *addresses, size_t_count, unsigned char *out);
+int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned char *out);
 
 void init_query(ssm2_query *q);
 void sig_io_handler(int status);
