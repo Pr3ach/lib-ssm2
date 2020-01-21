@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <termios.h>
 
-#define DBG		/* FIXME: Comment out */
+//#define DBG		/* FIXME: Comment out */
 
 #define MAX_DATA 128
 #define MAX_QUERY MAX_DATA+64
@@ -36,12 +36,15 @@
 /* Errors */
 #define SSM2_ESUCCESS 0
 #define SSM2_ETIMEOUT -1
-#define SSM2_EUNKN -2
-#define SSM2_ENOQUERY -3
-#define SSM2_EWRITE -4
-#define SSM2_EPARTIAL -5
-#define SSM2_EBADCS -6
-#define SSM2_EDST -7
+#define SSM2_EUNKN -2		/* Unkown error */
+#define SSM2_ENOQUERY -3	/* Nothing to be done */
+#define SSM2_EWRITE -4		/* Write error */
+#define SSM2_EPARTIAL -5	/* Partial response from ECU */
+#define SSM2_EBADCS -6		/* Bad response checksum */
+#define SSM2_EDST -7		/* Destination response mismatch */
+#define SSM2_EOPEN -8		/* Serial port open fail */
+#define SSM2_EGETTTY -9		/* Fail to retrieve current TTY settings */
+#define SSM2_ESETTTY -10	/* Fail to set current TTY settings */
 
 #define SSM2_QUERY_TIMEOUT 300000 /* in usec; 0.3s */
 

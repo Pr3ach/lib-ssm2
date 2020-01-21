@@ -36,31 +36,6 @@
 #include <string.h>
 #include "ssm2.h"
 
-int main(void)
-{
-	unsigned int a[] = {0x8f, 0xa5};
-	int noquery = 2;
-	unsigned char buf[32] = {0};
-	int ret = 0;
-
-	if (ssm2_open("/dev/ttyUSB0") != 0)
-	{
-		perror("[!] SSM2 open fail");
-		exit(-1);
-	}
-	if ((ret = ssm2_query_ecu(a, buf, noquery)) != SSM2_ESUCCESS)
-	{
-		printf("[!] ret val: %d\n", ret);
-		exit(-1);
-	}
-	for (int i = 0; i < noquery; i++)
-		printf("%02x ", buf[i]);
-	printf("\n");
-	ssm2_close();
-
-	return 0;
-}
-
 /*
  *
  * Open specified serial device for read/write.
@@ -70,13 +45,13 @@ int main(void)
 int ssm2_open(char *device)
 {
 	if ((fd = open(device, O_RDWR | O_NOCTTY)) < 0)
-		return -1;
+		return SSM2_EOPEN;
 
 	/* get current TTY settings */
 	if (tcgetattr(fd, &tios) < 0)
 	{
 		close(fd);
-		return -2;
+		return SSM2_EGETTTY;
 	}
 
 	/* save options so they can be restored later */
@@ -101,13 +76,13 @@ int ssm2_open(char *device)
 	if (tcsetattr(fd, TCSANOW, &tios) < 0)
 	{
 		close(fd);
-		return -3;
+		return SSM2_ESETTTY;
 	}
 
 	q = calloc(1, sizeof(ssm2_query));
 	r = calloc(1, sizeof(ssm2_response));
 
-	return 0;
+	return SSM2_ESUCCESS;
 }
 
 /*
