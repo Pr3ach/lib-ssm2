@@ -26,6 +26,7 @@
 #define MAX_QUERY MAX_DATA+64
 #define MAX_RESPONSE 512
 
+/* SSM2 header constants */
 #define SSM2_INIT 0x80
 #define SRC_ECU 0x10
 #define SRC_DIAG 0xf0
@@ -34,7 +35,7 @@
 #define SSM2_QUERY_CMD 0xa8
 #define SSM2_BLOCKQUERY_CMD 0xa0
 
-/* Errors */
+/* SSM2 related errors */
 #define SSM2_ESUCCESS 0
 #define SSM2_ETIMEOUT -1
 #define SSM2_EUNKN -2		/* Unkown error */
@@ -72,7 +73,7 @@ ssm2_response *r;	/* Global var for response */
 
 int ssm2_open(char *device);
 int ssm2_close(void);
-int ssm2_query_ecu(unsigned int *addresses, size_t_count, unsigned char *out);
+int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out);
 int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned char *out);
 
 void init_query(ssm2_query *q);

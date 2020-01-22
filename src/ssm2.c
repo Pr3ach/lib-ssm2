@@ -26,10 +26,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdint.h>
 #include <fcntl.h>
-#include <termios.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <time.h>
@@ -95,7 +93,7 @@ int ssm2_open(char *device)
  * Return SSM2_ESUCESS on success
  *
  */
-int ssm2_query_ecu(unsigned int *addresses, size_t_count, unsigned char *out)
+int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
 {
 	size_t i = 0;
 	int c = 0;
@@ -150,7 +148,7 @@ int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned ch
 	memset(r, 0, sizeof(ssm2_response));
 
 	q->q_raw[3] = 6;
-	q->q_raw[4] = SSM2_BLOCKQUERY_ECU;
+	q->q_raw[4] = SSM2_BLOCKQUERY_CMD;
 	q->q_raw[5] = (unsigned char) 0;	/* pad byte */
 	q->q_raw[6] = from_addr & 0x0000ff;
 	q->q_raw[7] = from_addr & 0x00ff00;
