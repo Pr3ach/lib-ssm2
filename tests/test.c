@@ -6,7 +6,7 @@
 
 int main(void)
 {
-	int i = 0;
+	unsigned int i = 0;
 	unsigned char buf[32] = {0};
 	int ret = 0;
 
