@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
-#include "ssm2.h"
+#include "../src/ssm2.h"
 
 int main(void)
 {
@@ -18,7 +18,7 @@ int main(void)
 
 	for (i = 0x01; i < 0xffff; i++)
 	{
-		if ((ret = ssm2_query_ecu((unsigned int []) {i}, buf, 1)) != SSM2_ESUCCESS)
+		if ((ret = ssm2_query_ecu((unsigned int []) {i}, 1, buf)) != SSM2_ESUCCESS)
 		{
 			printf("[!] ret val: %d\n", ret);
 			ssm2_close();
