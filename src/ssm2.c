@@ -1,20 +1,7 @@
 /*
- *  Copyright (C) 2019 - Preacher
+ * Subaru Select Monitor 2 (SSM2) library
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 
 /* SSM2 header: */
 /*unsigned char init;		init byte (0x80) */
@@ -35,10 +22,11 @@
 #include "ssm2.h"
 
 /*
- *
  * Open specified serial device for read/write.
- * Return < 0 if error, 0 otherwise.
  *
+ * device: serial device connected to ECU
+ *
+ * Return SSM2_ESUCCESS on success
  */
 int ssm2_open(char *device)
 {
@@ -87,8 +75,8 @@ int ssm2_open(char *device)
  * Query ECU for data at specified addresses locations.
  *
  * addresses: int array of ECU addresses to query
- * out: where to store the results
  * count: number of addresses to query
+ * out: where to store the results
  *
  * Return SSM2_ESUCESS on success
  *
@@ -126,7 +114,7 @@ int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
 	if (write(fd, q->q_raw, q->q_size) != (ssize_t) q->q_size)
 		return SSM2_EWRITE;
 
-	return get_query_response(out, count);
+	return get_query_response(out);
 }
 
 /*
@@ -134,7 +122,7 @@ int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
  *
  * from_addr: address from where to start reading
  * count: number of bytes to read from from_addr address
- * buf: store results here
+ * out: store results here
  *
  * Return SSM2_ESUCESS on success
  */
@@ -160,82 +148,18 @@ int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned ch
 	if (write(fd, q->q_raw, q->q_size) != (ssize_t) q->q_size)
 		return SSM2_EWRITE;
 
-	return get_query_response(out, count);
-}
-
-/*
- * Initialize SSM2 header
- *
- */
-void init_query(ssm2_query *q)
-{
-	memset(q, 0, sizeof(ssm2_query));
-
-	q->q_raw[0] = SSM2_INIT;
-	q->q_raw[1] = DST_ECU;
-	q->q_raw[2] = SRC_DIAG;
-}
-
-/*
- * Print raw ssm2 query, for debug purposes
- */
-void print_raw_query(ssm2_query *q)
-{
-	size_t i = 0;
-
-	printf("raw query   : ");
-	for (i = 0; i < 32; i++)
-		printf("%02x ", q->q_raw[i]);
-	printf("\n");
-}
-
-/*
- * Print raw ssm2 response, for debug purposes
- */
-void print_raw_response(ssm2_response *r)
-{
-	size_t i = 0;
-
-	printf("raw response: ");
-	for (i = 0; i < 32; i++)
-		printf("%02x ", r->r_raw[i]);
-	printf("\n");
-}
-
-/*
- * Compute and return ssm2 response checksum.
- *
- */
-unsigned char get_response_checksum(ssm2_response *r)
-{
-	unsigned char ck = 0;
-	size_t i = 0;
-
-	for (i = q->q_size; i < r->r_size-1; ck += r->r_raw[i++]);
-
-	return ck;
-}
-
-/*
- * Compute and return ssm2 query checksum.
- *
- */
-unsigned char get_checksum(ssm2_query *q)
-{
-	unsigned char ck = 0;
-	size_t i = 0;
-
-	for (i = 0; i < q->q_size; ck += q->q_raw[i++]);
-
-	return ck;
+	return get_query_response(out);
 }
 
 /*
  * Read and update response buffer and out.
- * Return 0 on success, < 0 otherwise.
+ *
+ * out: Pointer to a buffer to receive ECU response
+ *
+ * Return SSM2_ESUCESS on success
  *
  */
-int get_query_response(unsigned char *out, int count)
+int get_query_response(unsigned char *out)
 {
 	unsigned int bytes_avail = 0;
 	clock_t start = clock();
@@ -265,22 +189,23 @@ int get_query_response(unsigned char *out, int count)
 }
 
 /*
- * Unset signal handler, clean TTY, set old TTY options and close device.
- * Return > 0 if any error happens, 0 otherwise.
+ * Clean TTY, set back old TTY options and close device.
+ *
+ * Return either SSM2_ESUCCESS on success, or a mask of SSM2_ECLOSE|SSM2_ESETTTY
  *
  */
 int ssm2_close(void)
 {
-	int ret_mask = 0;
+	int ret_mask = SSM2_ESUCCESS;
 
 	/* restore old TTY settings */
 	tcflush(fd, TCIFLUSH);
 	if (tcsetattr(fd, TCSANOW, &old_tios) != 0)
-		ret_mask |= 1;
+		ret_mask = SSM2_ESETTTY;
 
 	/* close FD */
 	if (close(fd) != 0)
-		ret_mask |= 2;
+		ret_mask |= SSM2_ECLOSE;
 
 	if (r)
 		free(r);
@@ -290,3 +215,82 @@ int ssm2_close(void)
 	return ret_mask;
 }
 
+/*
+ * Initialize SSM2 query header.
+ *
+ * q: Pointer to a ssm2_query structure
+ */
+void init_query(ssm2_query *q)
+{
+	memset(q, 0, sizeof(ssm2_query));
+
+	q->q_raw[0] = SSM2_INIT;
+	q->q_raw[1] = DST_ECU;
+	q->q_raw[2] = SRC_DIAG;
+}
+
+/*
+ * Print raw ssm2 query, for debug purposes.
+ *
+ * q: Pointer to a ssm2_query structure
+ */
+void print_raw_query(ssm2_query *q)
+{
+	size_t i = 0;
+
+	printf("raw query   : ");
+	for (i = 0; i < 32; i++)
+		printf("%02x ", q->q_raw[i]);
+	printf("\n");
+}
+
+/*
+ * Print raw ssm2 response, for debug purposes.
+ *
+ * r: Pointer to a ssm2_response structure
+ */
+void print_raw_response(ssm2_response *r)
+{
+	size_t i = 0;
+
+	printf("raw response: ");
+	for (i = 0; i < 32; i++)
+		printf("%02x ", r->r_raw[i]);
+	printf("\n");
+}
+
+/*
+ * Compute and return ssm2 response checksum.
+ *
+ * r: Pointer to a ssm2_response structure
+ *
+ * Return response checksum
+ *
+ */
+unsigned char get_response_checksum(ssm2_response *r)
+{
+	unsigned char ck = 0;
+	size_t i = 0;
+
+	for (i = q->q_size; i < r->r_size-1; ck += r->r_raw[i++]);
+
+	return ck;
+}
+
+/*
+ * Compute and return ssm2 query checksum.
+ *
+ * q: Pointer to a ssm2_query structure
+ *
+ * Return query checksum
+ *
+ */
+unsigned char get_checksum(ssm2_query *q)
+{
+	unsigned char ck = 0;
+	size_t i = 0;
+
+	for (i = 0; i < q->q_size; ck += q->q_raw[i++]);
+
+	return ck;
+}

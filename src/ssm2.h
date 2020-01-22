@@ -46,7 +46,8 @@
 #define SSM2_EDST -7		/* Destination response mismatch */
 #define SSM2_EOPEN -8		/* Serial port open fail */
 #define SSM2_EGETTTY -9		/* Fail to retrieve current TTY settings */
-#define SSM2_ESETTTY -10	/* Fail to set current TTY settings */
+#define SSM2_ESETTTY 2		/* Fail to set current TTY settings */
+#define SSM2_ECLOSE 1		/* Fail to set current TTY settings */
 
 #define SSM2_QUERY_TIMEOUT 300000 /* in usec; 0.3s */
 
@@ -81,6 +82,7 @@ void sig_io_handler(int status);
 unsigned char get_checksum(ssm2_query *q);
 void print_raw_query(ssm2_query *q);
 void print_raw_response(ssm2_response *r);
-int get_query_response(unsigned char *out, int count);
+int get_query_response(unsigned char *out);
+unsigned char get_response_checksum(ssm2_response *r);
 
 #endif
