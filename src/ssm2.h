@@ -61,7 +61,6 @@ int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out);
 int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned char *out);
 
 void init_query(ssm2_query *q);
-void sig_io_handler(int status);
 unsigned char get_checksum(ssm2_query *q);
 void print_raw_query(ssm2_query *q);
 void print_raw_response(ssm2_response *r);
