@@ -145,6 +145,10 @@ int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned ch
 	q->q_size = 11;
 	q->q_raw[10] = get_checksum(q);
 
+#ifdef DBG
+	print_raw_query(q);
+#endif
+
 	if (write(fd, q->q_raw, q->q_size) != (ssize_t) q->q_size)
 		return SSM2_EWRITE;
 
