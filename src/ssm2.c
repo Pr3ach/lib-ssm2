@@ -171,7 +171,7 @@ int get_query_response(unsigned char *out)
 	do
 	{
 		ioctl(fd, FIONREAD, &bytes_avail);
-	} while(bytes_avail < q->q_size + 7 && start - time_ms() < SSM2_QUERY_TIMEOUT);
+	} while(bytes_avail < (q->q_size + 7) && start - time_ms() < SSM2_QUERY_TIMEOUT);
 
 	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
 		return SSM2_EPARTIAL;
