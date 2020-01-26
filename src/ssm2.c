@@ -138,9 +138,9 @@ int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned ch
 	q->q_raw[3] = 6;
 	q->q_raw[4] = SSM2_BLOCKQUERY_CMD;
 	q->q_raw[5] = (unsigned char) 0;	/* pad byte */
-	q->q_raw[6] = from_addr & 0x0000ff;
-	q->q_raw[7] = from_addr & 0x00ff00;
-	q->q_raw[8] = from_addr & 0xff0000;
+	q->q_raw[6] = (from_addr>>16) & 0xff;
+	q->q_raw[7] = (from_addr>>8) & 0xff;
+	q->q_raw[8] = from_addr & 0xff;
 	q->q_raw[9] = count;
 	q->q_size = 11;
 	q->q_raw[10] = get_checksum(q);
