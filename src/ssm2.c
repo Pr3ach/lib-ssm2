@@ -98,11 +98,11 @@ int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
 	/* data payload */
 	q->q_raw[4] = (unsigned char) SSM2_QUERY_CMD;
 	q->q_raw[5] = (unsigned char) 0;	/* pad byte */
-	for (i = 0, c = 6; i < count; i++, c++)
+	for (i = 0, c = 6; i < count; i++, c += 3)
 	{
-		q->q_raw[c++] = addresses[i] & 0xff0000;
-		q->q_raw[c++] = addresses[i] & 0x00ff00;
-		q->q_raw[c] = addresses[i] & 0x0000ff;
+		q->q_raw[c+2] = (addresses[i] & 0xff);
+		q->q_raw[c+1] = (addresses[i]>>8 & 0xff);
+		q->q_raw[c] = (addresses[i]>>16 & 0xff);
 	}
 	q->q_size = c + 1;
 	q->q_raw[c] = get_checksum(q);
