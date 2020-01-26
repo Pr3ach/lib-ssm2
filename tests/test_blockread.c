@@ -17,7 +17,7 @@ int main(int argc, char **argv, char **envp)
 	}
 
 	printf("a\n");
-	if ((ret = ssm2_blockquery_ecu(1, 0xff, buf)) != SSM2_ESUCCESS)
+	if ((ret = ssm2_blockquery_ecu(0x200000, 0x80, buf)) != SSM2_ESUCCESS)
 	{
 		perror("ssm2_blockread");
 		printf("ret: %d\n", ret);
