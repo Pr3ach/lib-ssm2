@@ -166,12 +166,12 @@ int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned ch
 int get_query_response(unsigned char *out)
 {
 	unsigned int bytes_avail = 0;
-	clock_t start = clock();
+	unsigned long long start = time_ms();
 
 	do
 	{
 		ioctl(fd, FIONREAD, &bytes_avail);
-	} while(bytes_avail < q->q_size + 7 && start - clock() < SSM2_QUERY_TIMEOUT);
+	} while(bytes_avail < q->q_size + 7 && start - time_ms() < SSM2_QUERY_TIMEOUT);
 
 	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
 		return SSM2_EPARTIAL;
@@ -297,4 +297,18 @@ unsigned char get_checksum(ssm2_query *q)
 	for (i = 0; i < q->q_size; ck += q->q_raw[i++]);
 
 	return ck;
+}
+
+/*
+ * Get time of day in milliseconds
+ *
+ * Return time of day in milliseconds
+ */
+unsigned long long time_ms(void)
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+
+	return (unsigned long long) tv.tv_sec * 1000 + (unsigned long long) tv.tv_usec / 1000;
 }

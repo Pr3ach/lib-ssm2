@@ -32,7 +32,7 @@
 #define SSM2_ESETTTY 2		/* Fail to set current TTY settings */
 #define SSM2_ECLOSE 1		/* Fail to set current TTY settings */
 
-#define SSM2_QUERY_TIMEOUT 300000 /* in usec; 0.3s */
+#define SSM2_QUERY_TIMEOUT 700 /* in msec; 0.7s */
 
 /* SSM2 query */
 typedef struct ssm2_query
@@ -66,5 +66,6 @@ void print_raw_query(ssm2_query *q);
 void print_raw_response(ssm2_response *r);
 int get_query_response(unsigned char *out);
 unsigned char get_response_checksum(ssm2_response *r);
+unsigned long long time_ms(void);
 
 #endif
