@@ -16,7 +16,7 @@ int main(void)
 		exit(-1);
 	}
 
-	for (i = 0x01; i < 0xffffff; i++)
+	for (i = 0x00; i < 0xffffff; i++)
 	{
 		if ((ret = ssm2_query_ecu((unsigned int []) {i}, 1, buf)) != SSM2_ESUCCESS)
 		{
