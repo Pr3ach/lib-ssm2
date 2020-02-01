@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <time.h>
+#include <sys/time.h>
 #include <string.h>
 #include "ssm2.h"
 
@@ -166,12 +166,12 @@ int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned ch
 int get_query_response(unsigned char *out)
 {
 	unsigned int bytes_avail = 0;
-	unsigned long long start = time_ms();
+	unsigned long long start_time = time_ms();
 
 	do
 	{
 		ioctl(fd, FIONREAD, &bytes_avail);
-	} while(bytes_avail < (q->q_size + 7) && start - time_ms() < SSM2_QUERY_TIMEOUT);
+	} while(bytes_avail < (q->q_size + 7) && time_ms() - start_time < SSM2_QUERY_TIMEOUT);
 
 	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
 		return SSM2_EPARTIAL;
