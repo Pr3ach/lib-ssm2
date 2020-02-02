@@ -25,7 +25,7 @@ int main(void)
 			exit(-1);
 		}
 
-		printf("%c", buf[0]);
+		printf("%02x", buf[0]);
 	}
 	ssm2_close();
 

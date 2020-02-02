@@ -23,13 +23,9 @@ int main(int argc, char **argv, char **envp)
 		exit(1);
 	}
 
+	printf("Response:\n");
 	for (i = 0; i < 0x80; i++)
-	{
-		if (!(i%16))
-			printf("%02x \n", buf[i]);
-		else
-			printf("%02x ", buf[i]);
-	}
+		printf("%02x%c", buf[i], !((i+1)%16) ? '\n' : ' ');
 	printf("\n");
 	ssm2_close();
 
