@@ -28,6 +28,7 @@ int main(void)
 
 		for (i = 0; i < 0x80; i++)
 			printf("%c", buf[i]);
+		fflush(stdout);
 	}
 	ssm2_close();
 
