@@ -189,7 +189,7 @@ int get_query_response(unsigned char *out)
 		return SSM2_EBADCS; /* checksum mismatch */
 
 	/* discard loopback */
-	memcpy(out, r->r_raw+(q->q_size+5), r->r_raw[3] - 1);
+	memcpy(out, r->r_raw+(q->q_size+5), r->r_raw[q->q_size+3] - 1);
 
 	return SSM2_ESUCCESS;
 }
