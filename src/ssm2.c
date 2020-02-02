@@ -314,3 +314,39 @@ unsigned long long time_ms(void)
 
 	return (unsigned long long) tv.tv_sec * 1000 + (unsigned long long) tv.tv_usec / 1000;
 }
+
+/*
+ * Convert error number to string
+ *
+ * Return string describing the error
+ */
+char *ssm2_strerror(unsigned int ssm2_errno)
+{
+	switch (ssm2_errno)
+	{
+		case SSM2_ESUCCESS:
+			return "SSM2_ESUCCESS";
+		case SSM2_ETIMEOUT:
+			return "SSM2_ETIMEOUT";
+		case SSM2_EUNKN:
+			return "SSM2_EUNKN";
+		case SSM2_ENOQUERY:
+			return "SSM2_ENOQUERY";
+		case SSM2_EWRITE:
+			return "SSM2_EWRITE";
+		case SSM2_EBADCS:
+			return "SSM2_EBADCS";
+		case SSM2_EDST:
+			return "SSM2_EDST";
+		case SSM2_EOPEN:
+			return "SSM2_EOPEN";
+		case SSM2_EGETTTY:
+			return "SSM2_EGETTTY";
+		case SSM2_ESETTTY:
+			return "SSM2_ESETTTY";
+		case SSM2_ECLOSE:
+			return "SSM2_ECLOSE";
+	}
+
+	return "SSM2_UNKNOWN_ERRNO";
+}

@@ -66,5 +66,6 @@ void print_raw_response(ssm2_response *r);
 int get_query_response(unsigned char *out);
 unsigned char get_response_checksum(ssm2_response *r);
 unsigned long long time_ms(void);
+char *ssm2_strerror(unsigned int ssm2_errno);
 
 #endif
