@@ -17,7 +17,7 @@ int main(void)
 		exit(-1);
 	}
 
-	for (pos = 0x00; pos < 0xffff7f; pos += 0x80)
+	for (pos = 0x200000; pos < 0xffff7f; pos += 0x80)
 	{
 		if ((ret = ssm2_ecu_readblock(pos, 0x80, buf)) != SSM2_ESUCCESS)
 		{
