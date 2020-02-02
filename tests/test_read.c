@@ -20,7 +20,7 @@ int main(void)
 	{
 		if ((ret = ssm2_ecu_read((unsigned int []) {i}, 1, buf)) != SSM2_ESUCCESS)
 		{
-			printf("[!] ret val: %d\n", ret);
+			printf("Error: %s\n", ssm2_strerror(ret));
 			ssm2_close();
 			exit(-1);
 		}

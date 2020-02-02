@@ -16,15 +16,12 @@ int main(int argc, char **argv, char **envp)
 		exit(1);
 	}
 
-	printf("a\n");
 	if ((ret = ssm2_ecu_readblock(0x200000, 0x80, buf)) != SSM2_ESUCCESS)
 	{
-		perror("ssm2_ecu_readblock");
-		printf("ret: %d\n", ret);
+		printf("Error: %s\n", ssm2_strerror(ret));
 		ssm2_close();
 		exit(1);
 	}
-	printf("b\n");
 
 	for (i = 0; i < 0xff; i++)
 	{
@@ -33,6 +30,7 @@ int main(int argc, char **argv, char **envp)
 		else
 			printf("%02x ", buf[i]);
 	}
+	printf("\n");
 	ssm2_close();
 
 	return 0;
