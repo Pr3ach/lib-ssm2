@@ -17,9 +17,9 @@ int main(int argc, char **argv, char **envp)
 	}
 
 	printf("a\n");
-	if ((ret = ssm2_blockquery_ecu(0x200000, 0x80, buf)) != SSM2_ESUCCESS)
+	if ((ret = ssm2_ecu_readblock(0x200000, 0x80, buf)) != SSM2_ESUCCESS)
 	{
-		perror("ssm2_blockread");
+		perror("ssm2_ecu_readblock");
 		printf("ret: %d\n", ret);
 		ssm2_close();
 		exit(1);

@@ -18,7 +18,7 @@ int main(void)
 
 	for (i = 0x00; i < 0xff; i++)
 	{
-		if ((ret = ssm2_query_ecu((unsigned int []) {i}, 1, buf)) != SSM2_ESUCCESS)
+		if ((ret = ssm2_ecu_read((unsigned int []) {i}, 1, buf)) != SSM2_ESUCCESS)
 		{
 			printf("[!] ret val: %d\n", ret);
 			ssm2_close();
