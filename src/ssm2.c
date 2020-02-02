@@ -81,7 +81,7 @@ int ssm2_open(char *device)
  * Return SSM2_ESUCESS on success
  *
  */
-int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
+int ssm2_ecu_read(unsigned int *addresses, size_t count, unsigned char *out)
 {
 	size_t i = 0;
 	int c = 0;
@@ -96,7 +96,7 @@ int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
 	q->q_raw[3] = 3*count + 2;
 
 	/* data payload */
-	q->q_raw[4] = (unsigned char) SSM2_QUERY_CMD;
+	q->q_raw[4] = (unsigned char) SSM2_CMD_READ;
 	q->q_raw[5] = (unsigned char) 0;	/* pad byte */
 	for (i = 0, c = 6; i < count; i++, c += 3)
 	{
@@ -106,6 +106,7 @@ int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
 	}
 	q->q_size = c + 1;
 	q->q_raw[c] = get_checksum(q);
+	q->q_resp_len = q->q_size + 6 + count;
 
 #ifdef DBG
 	print_raw_query(q);
@@ -126,7 +127,7 @@ int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
  *
  * Return SSM2_ESUCESS on success
  */
-int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned char *out)
+int ssm2_ecu_readblock(unsigned int from_addr, unsigned char count, unsigned char *out)
 {
 	if (count == 0 || from_addr + count > 0xffffff)
 		return SSM2_ENOQUERY;
@@ -136,7 +137,7 @@ int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned ch
 	memset(r, 0, sizeof(ssm2_response));
 
 	q->q_raw[3] = 6; /* data size = cmd + pad + addr + count = 6 bytes */
-	q->q_raw[4] = SSM2_BLOCKQUERY_CMD;
+	q->q_raw[4] = SSM2_CMD_READBLOCK;
 	q->q_raw[5] = (unsigned char) 0;	/* pad byte */
 	q->q_raw[6] = (from_addr>>16) & 0xff;
 	q->q_raw[7] = (from_addr>>8) & 0xff;
@@ -144,6 +145,7 @@ int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned ch
 	q->q_raw[9] = count;
 	q->q_size = 11;
 	q->q_raw[10] = get_checksum(q);
+	q->q_resp_len = q->q_size + 6 + count + 1;
 
 #ifdef DBG
 	print_raw_query(q);
@@ -171,10 +173,10 @@ int get_query_response(unsigned char *out)
 	do
 	{
 		ioctl(fd, FIONREAD, &bytes_avail);
-	} while(bytes_avail < (q->q_size + 7) && time_ms() - start_time < SSM2_QUERY_TIMEOUT);
+	} while(bytes_avail < (q->q_resp_len) && time_ms() - start_time < SSM2_QUERY_TIMEOUT);
 
-	if ((r->r_size = read(fd, r->r_raw, MAX_RESPONSE-1)) < q->q_size + 7)
-		return SSM2_EPARTIAL;
+	if ((r->r_size = read(fd, r->r_raw, q->q_resp_len)) != q->q_resp_len)
+		return SSM2_ETIMEOUT;
 
 #ifdef DBG
 	print_raw_response(r);
