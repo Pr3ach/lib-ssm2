@@ -245,7 +245,7 @@ void print_raw_query(ssm2_query *q)
 	size_t i = 0;
 
 	printf("raw query   : ");
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < q->q_size; i++)
 		printf("%02x ", q->q_raw[i]);
 	printf("\n");
 }
@@ -260,7 +260,7 @@ void print_raw_response(ssm2_response *r)
 	size_t i = 0;
 
 	printf("raw response: ");
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < r->r_size; i++)
 		printf("%02x ", r->r_raw[i]);
 	printf("\n");
 }
