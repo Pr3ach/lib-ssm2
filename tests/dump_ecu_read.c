@@ -26,6 +26,7 @@ int main(void)
 		}
 
 		printf("%c", buf[0]);
+		fflush(stdout);
 	}
 	ssm2_close();
 
