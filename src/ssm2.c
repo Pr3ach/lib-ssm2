@@ -128,14 +128,14 @@ int ssm2_query_ecu(unsigned int *addresses, size_t count, unsigned char *out)
  */
 int ssm2_blockquery_ecu(unsigned int from_addr, unsigned char count, unsigned char *out)
 {
-	if (count <= 0 || from_addr == 0)
+	if (count == 0 || from_addr + count > 0xffffff)
 		return SSM2_ENOQUERY;
-	count--;
+	count--; /* ECU will return count+1 bytes */
 
 	init_query(q);
 	memset(r, 0, sizeof(ssm2_response));
 
-	q->q_raw[3] = 6;
+	q->q_raw[3] = 6; /* data size = cmd + pad + addr + count = 6 bytes */
 	q->q_raw[4] = SSM2_BLOCKQUERY_CMD;
 	q->q_raw[5] = (unsigned char) 0;	/* pad byte */
 	q->q_raw[6] = (from_addr>>16) & 0xff;
