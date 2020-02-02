@@ -16,14 +16,14 @@ int main(int argc, char **argv, char **envp)
 		exit(1);
 	}
 
-	if ((ret = ssm2_ecu_readblock(0x200000, 0x80, buf)) != SSM2_ESUCCESS)
+	if ((ret = ssm2_ecu_readblock(0x000000, 0x80, buf)) != SSM2_ESUCCESS)
 	{
 		printf("Error: %s\n", ssm2_strerror(ret));
 		ssm2_close();
 		exit(1);
 	}
 
-	for (i = 0; i < 0xff; i++)
+	for (i = 0; i < 0x80; i++)
 	{
 		if (!(i%16))
 			printf("%02x \n", buf[i]);
