@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <termios.h>
 
-#define DBG		/* FIXME: Comment out on prod build */
+//#define DBG		/* FIXME: Comment out on prod build */
 
 #define MAX_DATA 128
 #define MAX_QUERY MAX_DATA+64
