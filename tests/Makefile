@@ -2,9 +2,9 @@ CC=gcc
 LFLAGS=-m32
 CFLAGS=-s -m32
 BIN1=test_read
-BIN2=test_blockread
+BIN2=test_readblock
 SRC1=../src/ssm2.c test_read.c
-SRC2=../src/ssm2.c test_blockread.c
+SRC2=../src/ssm2.c test_readblock.c
 OBJ1=$(SRC1:.c=.o)
 OBJ2=$(SRC2:.c=.o)
 
